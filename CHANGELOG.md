@@ -11,6 +11,15 @@ We follow [Semantic Versioning](https://semver.org/):
 - **PATCH** version `0.0.Z`: Increment for backward-compatible bug fixes and documentation tweaks.
 
 ---
+## [0.2.0] - 2025-11-10
+### Added
+- Implemented basic survay functionality with models and serializers
+- Created endpoints for creating, retrieving, updating, and deleting surveys
+- Added survey response submission endpoint
+- Integrated survey functionality with user authentication
+
+### Fixed
+- Fix some minor bugs in settings 
 
 ## [0.1.0] - 2025-11-01
 
