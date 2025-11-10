@@ -3,28 +3,53 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.password_validation import validate_password
-
+from rest_framework_simplejwt.tokens import RefreshToken
 User = get_user_model()
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    # Ensure the serializer expects "email" instead of "username"
+    username_field = 'email'
+
     def validate(self, attrs):
-        data = super().validate(attrs)
-        
-        # Check if email is verified
-        if not self.user.is_email_verified:
-            raise serializers.ValidationError(
-                "Email not verified. Please verify your email before logging in."
-            )
-        
-        # Add custom claims
-        data['user'] = {
-            'id': str(self.user.id),
-            'username': self.user.username,
-            'email': self.user.email,
-            'is_email_verified': self.user.is_email_verified,
+        email = attrs.get('email')
+        password = attrs.get('password')
+
+        if email is None or password is None:
+            raise serializers.ValidationError({"error": "Email and password are required."})
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError({"error": "User with this email not found."})
+
+        # Check password
+        if not user.check_password(password):
+            raise serializers.ValidationError({"error": "Incorrect password."})
+
+        # Check active
+        if not user.is_active:
+            raise serializers.ValidationError({"error": "User account is disabled."})
+
+        # Check email verified
+        if not getattr(user, 'is_email_verified', False):
+            raise serializers.ValidationError({"error": "Email not verified. Please verify your email before logging in."})
+
+        # At this point we can generate tokens
+        refresh = RefreshToken.for_user(user)
+        data = {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token)
         }
-        
+
+        # Include user info
+        data['user'] = {
+            'id': str(user.id),
+            'username': user.username,
+            'email': user.email,
+            'is_email_verified': user.is_email_verified,
+        }
+
         return data
 
 

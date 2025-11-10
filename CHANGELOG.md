@@ -11,6 +11,10 @@ We follow [Semantic Versioning](https://semver.org/):
 - **PATCH** version `0.0.Z`: Increment for backward-compatible bug fixes and documentation tweaks.
 
 ---
+## [0.2.0] - 2025-11-11
+### Fixed
+- fixed some minor bugs in CustomTokenObtainPairSerializer
+
 ## [0.2.0] - 2025-11-10
 ### Added
 - Implemented basic survay functionality with models and serializers
