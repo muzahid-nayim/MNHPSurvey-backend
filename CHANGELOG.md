@@ -1,11 +1,3 @@
-
----
-
-## 📝 `CHANGELOG.md`
-
-This file documents all notable changes to your project. Here's a template based on Semantic Versioning:
-
-```markdown
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -18,14 +10,63 @@ We follow [Semantic Versioning](https://semver.org/):
 - **MINOR** version `0.Y.0`: Increment for backward-compatible additions (new features, enhancements).
 - **PATCH** version `0.0.Z`: Increment for backward-compatible bug fixes and documentation tweaks.
 
-
-
-
-## [Unreleased]
-### Added
-- Initial project setup with Django and Django Rest Framework.
-- Created `backend` project structure with separate settings for development and production.
-- Configured PostgreSQL database connection.
-- Implemented basic user authentication and admin panel.
-
 ---
+## [0.2.0] - 2025-11-10
+### Added
+- Implemented basic survay functionality with models and serializers
+- Created endpoints for creating, retrieving, updating, and deleting surveys
+- Added survey response submission endpoint
+- Integrated survey functionality with user authentication
+
+### Fixed
+- Fix some minor bugs in settings 
+
+## [0.1.0] - 2025-11-01
+
+### Added
+- Complete JWT authentication system with djangorestframework-simplejwt
+- Custom User model with UUID primary key and email verification support
+- User registration endpoint with automatic verification email
+- Email verification system with 24-hour token expiry
+- Resend verification email functionality
+- Custom login endpoint with email verification check
+- Token refresh endpoint for renewing access tokens
+- Password reset request and confirmation endpoints with 1-hour token expiry
+- Change password endpoint for authenticated users
+- User profile view and update endpoints
+- Logout functionality with token blacklisting
+- Delete account endpoint with password confirmation
+- Email utility functions for verification and password reset emails
+- Token blacklist support for secure logout
+- CORS configuration for Next.js frontend integration
+- Environment variable support using python-decouple
+- Custom token serializer with user data in login response
+
+### Changed
+- Migrated from default User model to custom User model
+- Configured email backend to use SMTP (Gmail)
+- Set ACCESS_TOKEN_LIFETIME to 60 minutes
+- Set REFRESH_TOKEN_LIFETIME to 7 days
+- Enabled token rotation and blacklisting after rotation
+
+### Database Schema
+- `users` table with UUID id, email, username, email verification status
+- `email_verification_tokens` table for email verification
+- `password_reset_tokens` table for password reset flow
+- Token blacklist tables for secure logout
+
+### Security
+- Password validation with Django's built-in validators
+- Email enumeration protection in password reset flow
+- JWT token-based authentication
+- Token blacklisting on logout
+- Secure password hashing
+
+
+
+## [0.0.1] - Initial Setup
+### Added
+- Initial project setup with Django 5.2.7 and Django Rest Framework
+- Created `backend` project structure
+- Configured SQLite database for development
+- Basic project configuration and admin panel setup

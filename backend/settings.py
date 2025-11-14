@@ -43,9 +43,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 	'rest_framework',
 	'rest_framework_simplejwt.token_blacklist',
+	'corsheaders',
 	'backend',
 	'users',
-	'corsheaders'
+	'surveys',
 	
 ]
 
@@ -98,7 +99,7 @@ EMAIL_VERIFICATION_TOKEN_LIFETIME = timedelta(hours=24)
 PASSWORD_RESET_TOKEN_LIFETIME = timedelta(hours=1)
 
 MIDDLEWARE = [
-	'corsheaders.middleware.CorsMiddleware',  # Add at top
+	'corsheaders.middleware.CorsMiddleware',  
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -110,7 +111,9 @@ MIDDLEWARE = [
 
 # CORS Settings
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  
+    "http://localhost:3000",
+	'http://192.168.0.121:3000',
+
 ]
 CORS_ALLOW_CREDENTIALS = True
 
