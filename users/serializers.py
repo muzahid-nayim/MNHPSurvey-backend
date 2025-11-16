@@ -43,12 +43,12 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         }
 
         # Include user info
-        data['user'] = {
-            'id': str(user.id),
-            'username': user.username,
-            'email': user.email,
-            'is_email_verified': user.is_email_verified,
-        }
+        # data['user'] = {
+        #     'id': str(user.id),
+        #     'username': user.username,
+        #     'email': user.email,
+        #     'is_email_verified': user.is_email_verified,
+        # }
 
         return data
 
