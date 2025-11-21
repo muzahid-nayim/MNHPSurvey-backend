@@ -11,6 +11,9 @@ We follow [Semantic Versioning](https://semver.org/):
 - **PATCH** version `0.0.Z`: Increment for backward-compatible bug fixes and documentation tweaks.
 
 ---
+## [0.2.2] - 2025-11-21
+### Fixed
+- sending user data in login response .
 
 ## [0.2.1] - 2025-11-16
 ### Fixed
