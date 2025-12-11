@@ -12,6 +12,12 @@ We follow [Semantic Versioning](https://semver.org/):
 
 ---
 
+## [0.2.3] - 2025-12-12
+
+### Changed
+
+-Use tab indentation all over the project.
+
 ## [0.2.3] - 2025-12-09
 
 ### Added
