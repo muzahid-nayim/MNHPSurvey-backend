@@ -11,6 +11,10 @@ We follow [Semantic Versioning](https://semver.org/):
 -   **PATCH** version `0.0.Z`: Increment for backward-compatible bug fixes and documentation tweaks.
 
 ---
+## [0.2.4] - 2025-12-13
+### Fixed
+- Fixed some small issue and use reusavle ip tracker
+
 
 ## [0.2.3] - 2025-12-12
 
