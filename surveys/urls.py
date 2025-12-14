@@ -1,28 +1,25 @@
 # surveys/urls.py
 from django.urls import path
 from .views import (
+
 	# Survey endpoints
 	SurveyListCreateView,
 	SurveyDetailView,
 	SurveyStatusUpdateView,
-	
 	# Question endpoints
 	QuestionCreateView,
 	QuestionListView,
 	QuestionDetailView,
-	
 	# Option endpoints
 	QuestionOptionCreateView,
 	QuestionOptionDetailView,
-	
-	# Invitation endpoints
-	SendInvitationsView,
-	InvitationListView,
-	
+	# Allowed Email Management endpoints
+	AllowedEmailListCreateView,
+	AllowedEmailDetailView,
+	SurveyAllowedEmailsView,
 	# Public survey taking endpoints
 	TakeSurveyView,
 	SubmitSurveyResponseView,
-	
 	# Response viewing endpoints
 	SurveyResponseListView,
 	SurveyResponseDetailView,
@@ -38,88 +35,118 @@ Structure:
 /api/surveys/<id>/questions/<id>/       - Update/Delete question
 /api/surveys/<id>/questions/<id>/options/    - Add option
 /api/surveys/<id>/questions/<id>/options/<id>/ - Update/Delete option
-/api/surveys/<id>/invite/               - Send invitations
-/api/surveys/<id>/invitations/          - List invitations
+/api/surveys/<id>/allowed-emails/       - Manage allowed emails for survey
 /api/surveys/<id>/status/               - Update survey status
 /api/surveys/<id>/responses/            - View all responses
 /api/surveys/<id>/responses/<id>/       - View single response
 /api/surveys/take/<id>/                 - Public: Get survey to take
 /api/surveys/submit/<id>/               - Public: Submit response
+/api/allowed-emails/                    - List/Create user's allowed emails
+/api/allowed-emails/<id>/               - View/Delete user's allowed email
 """
 
 urlpatterns = [
+
 	# ==========================================
 	# SURVEY MANAGEMENT (Owner only)
 	# ==========================================
-	
 	# List all surveys and create new survey
-	path('', SurveyListCreateView.as_view(), name='survey-list-create'),
-	
+	path("", SurveyListCreateView.as_view(), name="survey-list-create"),
 	# Get/Update/Delete specific survey
-	path('<uuid:id>/', SurveyDetailView.as_view(), name='survey-detail'),
-	
+	path("<uuid:id>/", SurveyDetailView.as_view(), name="survey-detail"),
 	# Update survey status (draft/active/closed)
-	path('<uuid:survey_id>/status/', SurveyStatusUpdateView.as_view(), name='survey-status'),
-	
-	
+	path(
+		"<uuid:survey_id>/status/",
+		SurveyStatusUpdateView.as_view(),
+		name="survey-status",
+	),
 	# ==========================================
 	# QUESTION MANAGEMENT (Owner only)
 	# ==========================================
-	
 	# Add question to survey and list all questions
-	path('<uuid:survey_id>/questions/', QuestionCreateView.as_view(), name='question-create'),
-	path('<uuid:survey_id>/questions/list/', QuestionListView.as_view(), name='question-list'),
-	
+	path(
+		"<uuid:survey_id>/questions/",
+		QuestionCreateView.as_view(),
+		name="question-create",
+	),
+	path(
+		"<uuid:survey_id>/questions/list/",
+		QuestionListView.as_view(),
+		name="question-list",
+	),
 	# Get/Update/Delete specific question
-	path('<uuid:survey_id>/questions/<uuid:id>/', QuestionDetailView.as_view(), name='question-detail'),
-	
-	
+	path(
+		"<uuid:survey_id>/questions/<uuid:id>/",
+		QuestionDetailView.as_view(),
+		name="question-detail",
+	),
 	# ==========================================
 	# QUESTION OPTION MANAGEMENT (Owner only)
 	# ==========================================
-	
 	# Add option to question
-	path('<uuid:survey_id>/questions/<uuid:question_id>/options/', 
-		 QuestionOptionCreateView.as_view(), 
-		 name='option-create'),
-	
+	path(
+		"<uuid:survey_id>/questions/<uuid:question_id>/options/",
+		QuestionOptionCreateView.as_view(),
+		name="option-create",
+	),
 	# Get/Update/Delete specific option
-	path('<uuid:survey_id>/questions/<uuid:question_id>/options/<uuid:id>/', 
-		 QuestionOptionDetailView.as_view(), 
-		 name='option-detail'),
-	
-	
+	path(
+		"<uuid:survey_id>/questions/<uuid:question_id>/options/<uuid:id>/",
+		QuestionOptionDetailView.as_view(),
+		name="option-detail",
+	),
 	# ==========================================
-	# INVITATION MANAGEMENT (Owner only)
+	# ALLOWED EMAILS MANAGEMENT (Owner only)
 	# ==========================================
-	
-	# Send invitations to emails
-	path('<uuid:survey_id>/invite/', SendInvitationsView.as_view(), name='survey-invite'),
-	
-	# List all invitations for survey
-	path('<uuid:survey_id>/invitations/', InvitationListView.as_view(), name='invitation-list'),
-	
-	
+	# Manage allowed emails for a survey
+	path(
+		"<uuid:survey_id>/allowed-emails/",
+		SurveyAllowedEmailsView.as_view(),
+		name="survey-allowed-emails",
+	),
 	# ==========================================
 	# RESPONSE VIEWING (Owner only)
 	# ==========================================
-	
 	# List all responses for survey
-	path('<uuid:survey_id>/responses/', SurveyResponseListView.as_view(), name='response-list'),
-	
+	path(
+		"<uuid:survey_id>/responses/",
+		SurveyResponseListView.as_view(),
+		name="response-list",
+	),
 	# View single response detail
-	path('<uuid:survey_id>/responses/<uuid:id>/', 
-		 SurveyResponseDetailView.as_view(), 
-		 name='response-detail'),
-	
-	
+	path(
+		"<uuid:survey_id>/responses/<uuid:id>/",
+		SurveyResponseDetailView.as_view(),
+		name="response-detail",
+	),
 	# ==========================================
 	# PUBLIC ENDPOINTS (Survey takers)
 	# ==========================================
-	
 	# Get survey for taking (public access)
-	path('take/<uuid:survey_id>/', TakeSurveyView.as_view(), name='take-survey'),
-	
+	path("take/<uuid:survey_id>/", TakeSurveyView.as_view(), name="take-survey"),
 	# Submit survey response (public access)
-	path('submit/<uuid:survey_id>/', SubmitSurveyResponseView.as_view(), name='submit-survey'),
+	path(
+		"submit/<uuid:survey_id>/",
+		SubmitSurveyResponseView.as_view(),
+		name="submit-survey",
+	),
+]
+
+# ==========================================
+# ALLOWED EMAILS ENDPOINTS (User's list)
+# ==========================================
+
+urlpatterns += [
+	# List all allowed emails and create new email
+	path(
+		"allowed-emails/",
+		AllowedEmailListCreateView.as_view(),
+		name="allowed-email-list-create",
+	),
+	# View/Delete specific allowed email
+	path(
+		"allowed-emails/<uuid:id>/",
+		AllowedEmailDetailView.as_view(),
+		name="allowed-email-detail",
+	),
 ]
