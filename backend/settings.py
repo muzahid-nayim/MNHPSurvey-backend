@@ -96,7 +96,7 @@ FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:3000')
 
 # Token expiry times
 EMAIL_VERIFICATION_TOKEN_LIFETIME = timedelta(hours=24)
-PASSWORD_RESET_TOKEN_LIFETIME = timedelta(hours=1)
+PASSWORD_RESET_TOKEN_LIFETIME = timedelta(hours=72)
 
 MIDDLEWARE = [
 	'corsheaders.middleware.CorsMiddleware',  
