@@ -11,6 +11,16 @@ We follow [Semantic Versioning](https://semver.org/):
 -   **PATCH** version `0.0.Z`: Increment for backward-compatible bug fixes and documentation tweaks.
 
 ---
+## [0.2.4] - 2025-12-30
+### Fixed
+ Fixed question option not adding issue while editing question.
+- Added custom update method to QuestionSerializer
+- Handles create/update/delete of options based on incoming IDs
+- Preserves existing option IDs while allowing new options
+- Automatically removes options not included in update request
+- No view changes needed - works with existing QuestionDetailView
+
+
 ## [0.2.4] - 2025-12-13
 ### Fixed
 - Fixed some small issue and use reusavle ip tracker

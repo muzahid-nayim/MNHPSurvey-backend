@@ -33,28 +33,64 @@ class QuestionOptionSerializer(serializers.ModelSerializer):
 # ============================================
 # SERIALIZER 2: Question
 # ============================================
+# serializers.py
 class QuestionSerializer(serializers.ModelSerializer):
-	"""
-	Serializer for questions
-	- Includes all options for the question
-	- 'options' comes from related_name='options' in QuestionOption model
-	"""
+    """
+    Serializer for questions
+    - Includes all options for the question
+    - Handles nested option updates
+    """
+    options = QuestionOptionSerializer(many=True)
 
-	options = QuestionOptionSerializer(many=True, read_only=True)
+    class Meta:
+        model = Question
+        fields = [
+            "id",
+            "question_text",
+            "question_type",
+            "order",
+            "is_required",
+            "options",
+            "created_at",
+        ]
+        read_only_fields = ["id", "created_at"]
 
-	class Meta:
-		model = Question
-		fields = [
-			"id",
-			"question_text",
-			"question_type",
-			"order",
-			"is_required",
-			"options",
-			"created_at",
-		]
-		read_only_fields = ["id", "created_at"]
+    def update(self, instance, validated_data):
+        """
+        Custom update to handle nested options
+        Steps:
+        1. Update question fields
+        2. Handle options (create/update/delete)
+        """
+        # Step 1: Update question fields
+        options_data = validated_data.pop('options', [])
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
 
+        # Step 2: Get existing option IDs
+        existing_option_ids = [opt.id for opt in instance.options.all()]
+        incoming_option_ids = [opt.get('id') for opt in options_data if opt.get('id')]
+
+        # Step 3: Delete options not in the update
+        for option in instance.options.all():
+            if option.id not in incoming_option_ids:
+                option.delete()
+
+        # Step 4: Update existing and create new options
+        for option_data in options_data:
+            option_id = option_data.get('id')
+            if option_id and option_id in existing_option_ids:
+                # Update existing option
+                option = QuestionOption.objects.get(id=option_id, question=instance)
+                for attr, value in option_data.items():
+                    setattr(option, attr, value)
+                option.save()
+            else:
+                # Create new option
+                QuestionOption.objects.create(question=instance, **option_data)
+
+        return instance
 
 # ============================================
 # SERIALIZER 3: Question Create (Nested)
@@ -69,7 +105,8 @@ class QuestionCreateSerializer(serializers.ModelSerializer):
 
 	class Meta:
 		model = Question
-		fields = ["question_text", "question_type", "order", "is_required", "options"]
+		fields = [
+			"question_text", "question_type", "order", "is_required", "options"]
 
 	def create(self, validated_data):
 		"""

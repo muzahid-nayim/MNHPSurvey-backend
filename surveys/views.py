@@ -160,6 +160,10 @@ class QuestionDetailView(generics.RetrieveUpdateDestroyAPIView):
 	permission_classes = [IsAuthenticated]
 	serializer_class = QuestionSerializer
 	lookup_field = "id"
+	# def initial(self, request, *args, **kwargs):
+	# 	super().initial(request, *args, **kwargs)
+	# 	print(f"user request data ===== {request.data} =====")
+
 
 	def get_queryset(self):
 		"""User can only access questions from their surveys"""
