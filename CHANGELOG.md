@@ -11,7 +11,12 @@ We follow [Semantic Versioning](https://semver.org/):
 -   **PATCH** version `0.0.Z`: Increment for backward-compatible bug fixes and documentation tweaks.
 
 ---
-## [0.2.4] - 2025-12-30
+
+## [0.2.6] - 2025-01-05
+### changes
+- add user first name and last name field in serializer.
+
+## [0.2.5] - 2025-12-30
 ### Fixed
  Fixed question option not adding issue while editing question.
 - Added custom update method to QuestionSerializer
