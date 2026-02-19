@@ -11,6 +11,9 @@ We follow [Semantic Versioning](https://semver.org/):
 -   **PATCH** version `0.0.Z`: Increment for backward-compatible bug fixes and documentation tweaks.
 
 ---
+## [0.2.7] - 2025-02-19
+### Fixed
+- Fixed first_name and last_name is not saving during ragistration by adding those field in serializer.
 
 ## [0.2.6] - 2025-01-05
 ### changes

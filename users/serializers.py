@@ -41,7 +41,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 			'refresh': str(refresh),
 			'access': str(refresh.access_token)
 		}
-
 		# Include user info
 		data['user'] = {
 			'id': str(user.id),
@@ -61,7 +60,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 	
 	class Meta:
 		model = User
-		fields = ('username', 'email', 'password', 'password2')
+		fields = ('username', 'email', 'password', 'password2','first_name', 'last_name')
 	
 	def validate(self, attrs):
 		if attrs['password'] != attrs['password2']:
@@ -85,7 +84,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = User
-		fields = ('id', 'username', 'email', 'is_email_verified', 'created_at','first_name','last_name','last_name')
+		fields = ('id', 'username', 'email', 'is_email_verified', 'created_at','first_name','last_name',)
 		read_only_fields = ('id', 'is_email_verified', 'created_at')
 
 
