@@ -1,4 +1,27 @@
 # surveys/models.py
+
+"""
+Database Models for Survey Application
+
+What is a Model?
+- A model represents a table in the database
+- Each model = one table
+- Each field = one column
+- Each instance = one row
+
+The structure is:
+Survey (1) -------- (Many) Question (1) -------- (Many) QuestionOption
+Survey (1) -------- (Many) SurveyResponse (1) -------- (Many) Answer (1) -------- (Many) AnswerSelection (M) QuestionOption
+AllowedEmail (M) -------- (Many) SurveyAllowedEmail
+
+This means:
+- One survey can have many questions
+- One question can have many options
+- One survey can have many responses
+- One response can have many answers
+- One answer can select many options
+"""
+
 from django.db import models
 from django.contrib.auth import get_user_model
 import uuid
@@ -8,48 +31,71 @@ User = get_user_model()
 
 class Survey(models.Model):
 	"""
-	Main Survey Model
-	- Stores survey title, description, settings
+	Survey Model
+	
+	This model stores all the basic information about a survey.
+	It's like the container that holds all questions and responses.
+	
+	Key features:
+	- Title and description of the survey
+	- Access control (who can respond)
+	- Display mode (how questions appear to respondents)
+	- Status (draft/active/closed)
+	- Settings (multiple responses allowed? show progress bar?)
+	
+	Related to:
+	- User: Who created this survey (the owner)
+	- Question: All the questions in this survey
+	- SurveyResponse: All responses from people who answered
 	"""
 
-	# Access Control Types
+	# Access Control Types - Who is allowed to respond?
 	ACCESS_TYPES = [
-		(
-			"public_anonymous",
-			"Public - Anonymous",
-		),  # Anyone can join, responses are anonymous
-		(
-			"public_authenticated",
-			"Public - Login Required",
-		),  # Must login, can see who responded
-		("private_invited", "Private - Invited Only"),  # Only specific emails can join
+		# Anyone can respond, we don't know who they are
+		("public_anonymous", "Public - Anonymous"),
+		# Anyone can respond, but they must log in
+		("public_authenticated", "Public - Login Required"),
+		# Only specific invited people can respond
+		("private_invited", "Private - Invited Only"),
 	]
 
-	# Display Modes (how questions appear)
+	# Display Modes - How should questions appear?
 	DISPLAY_MODES = [
-		("one_by_one", "One Question at a Time"),  # Like Google Forms
-		("show_all", "Show All Questions"),  # All questions on one page
-		("paginated", "Custom Pages"),  # Show X questions per page
+		# Show one question at a time (like Google Forms)
+		("one_by_one", "One Question at a Time"),
+		# Show all questions on one page
+		("show_all", "Show All Questions"),
+		# Show multiple questions per page (custom number)
+		("paginated", "Custom Pages"),
 	]
 
-	# Status
+	# Status - What stage is this survey in?
 	STATUS_CHOICES = [
-		("draft", "Draft"),  # Still creating
-		("active", "Active"),  # Published and accepting responses
-		("closed", "Closed"),  # No longer accepting responses
+		# Still being created, not published yet
+		("draft", "Draft"),
+		# Published and accepting responses
+		("active", "Active"),
+		# No longer accepting new responses
+		("closed", "Closed"),
 	]
 
 	# Basic Info
 	id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-	owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="surveys")
+	owner = models.ForeignKey(
+		User,
+		on_delete=models.CASCADE,
+		related_name="surveys"
+	)  # Link to user who created this survey
 
-	title = models.CharField(max_length=255)
-	description = models.TextField(blank=True)
+	title = models.CharField(max_length=255)  # Survey name
+	description = models.TextField(blank=True)  # Survey description
 
 	# Access Control
 	access_type = models.CharField(
-		max_length=30, choices=ACCESS_TYPES, default="public_anonymous"
-	)
+		max_length=30,
+		choices=ACCESS_TYPES,
+		default="public_anonymous"
+	)  # Who can respond?
 
 	# Display Settings
 	display_mode = models.CharField(
