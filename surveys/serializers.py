@@ -1,4 +1,17 @@
 # surveys/serializers.py
+
+"""
+What are Serializers?
+
+Serializers convert Python objects to JSON (for sending to frontend)
+and JSON to Python objects (when receiving from frontend).
+
+Think of them as data validators and formatters:
+- They check if data is valid
+- They convert formats (Python <-> JSON)
+- They control what fields are shown or hidden
+"""
+
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import (
@@ -61,7 +74,12 @@ class QuestionSerializer(serializers.ModelSerializer):
         Steps:
         1. Update question fields
         2. Handle options (create/update/delete)
+        
+        IMPORTANT: Never delete options that have responses!
+        This prevents cascading deletion of survey response data.
         """
+        from .models import AnswerSelection
+        
         # Step 1: Update question fields
         options_data = validated_data.pop('options', [])
         for attr, value in validated_data.items():
@@ -72,10 +90,16 @@ class QuestionSerializer(serializers.ModelSerializer):
         existing_option_ids = [opt.id for opt in instance.options.all()]
         incoming_option_ids = [opt.get('id') for opt in options_data if opt.get('id')]
 
-        # Step 3: Delete options not in the update
+        # Step 3: Delete options not in the update (BUT ONLY if they have no responses)
         for option in instance.options.all():
             if option.id not in incoming_option_ids:
-                option.delete()
+                # Check if this option has any responses
+                has_responses = AnswerSelection.objects.filter(selected_option=option).exists()
+                
+                if not has_responses:
+                    # Safe to delete - no responses exist for this option
+                    option.delete()
+                # else: Keep the option to preserve response data integrity
 
         # Step 4: Update existing and create new options
         for option_data in options_data:
@@ -97,8 +121,23 @@ class QuestionSerializer(serializers.ModelSerializer):
 # ============================================
 class QuestionCreateSerializer(serializers.ModelSerializer):
 	"""
-	Special serializer for creating questions WITH options
-	- Allows creating question and options in one request
+	Serializer for creating a question WITH its options in one go
+	
+	This is special because you can create a question and its options
+	in a single API request instead of making multiple requests.
+	
+	Example request:
+	{
+		"question_text": "What's your age?",
+		"question_type": "single_choice",
+		"order": 1,
+		"is_required": true,
+		"options": [
+			{"option_text": "18-25", "order": 0},
+			{"option_text": "26-35", "order": 1},
+			{"option_text": "36-45", "order": 2}
+		]
+	}
 	"""
 
 	options = QuestionOptionSerializer(many=True, required=False)
@@ -106,29 +145,42 @@ class QuestionCreateSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Question
 		fields = [
-			"question_text", "question_type", "order", "is_required", "options"]
+			"question_text",
+			"question_type",
+			"order",
+			"is_required",
+			"options"
+		]
 
 	def create(self, validated_data):
 		"""
-		Custom create method to handle nested options
-
-		Steps:
-		1. Extract options data from validated_data
-		2. Create the question
-		3. Create each option and link to question
-		4. Return the question
+		Create a question and all its options
+		
+		Why custom create? Because we have nested data (options inside question)
+		and the default create() doesn't handle that automatically.
+		
+		Process:
+		1. Extract options from the data
+		2. Create the question first
+		3. Create each option and link it to the question
+		4. Return the complete question
 		"""
-		# Step 1: Get options data and remove from validated_data
+		
+		# STEP 1: Get the options list and remove it from the data
+		# (We can't pass it directly to Question.objects.create)
 		options_data = validated_data.pop("options", [])
 
-		# Step 2: Create the question
+		# STEP 2: Create the question with the remaining data
 		question = Question.objects.create(**validated_data)
 
-		# Step 3: Create each option
+		# STEP 3: Create each option
 		for option_data in options_data:
+			# **option_data unpacks the dict into keyword arguments
+			# Example: {"option_text": "Yes", "order": 0}
+			# becomes: QuestionOption.objects.create(question=question, option_text="Yes", order=0)
 			QuestionOption.objects.create(question=question, **option_data)
 
-		# Step 4: Return question
+		# STEP 4: Return the question
 		return question
 
 
@@ -367,3 +419,47 @@ class SubmitSurveyResponseSerializer(serializers.Serializer):
 			if not isinstance(answer["selected_options"], list):
 				raise serializers.ValidationError("'selected_options' must be a list")
 		return value
+
+
+# ============================================
+# SERIALIZER 12: Aggregated Option Stats
+# ============================================
+class AggregatedOptionSerializer(serializers.Serializer):
+	"""
+	Serializer for option statistics
+	Shows count and percentage of responses for each option
+	"""
+	id = serializers.UUIDField()
+	option_text = serializers.CharField()
+	count = serializers.IntegerField()
+	percentage = serializers.FloatField()
+
+
+# ============================================
+# SERIALIZER 13: Aggregated Question Stats
+# ============================================
+class AggregatedQuestionSerializer(serializers.Serializer):
+	"""
+	Serializer for question statistics
+	Shows question with aggregated options data
+	"""
+	id = serializers.UUIDField()
+	question_text = serializers.CharField()
+	question_type = serializers.CharField()
+	total_answers = serializers.IntegerField()
+	options = AggregatedOptionSerializer(many=True)
+
+
+# ============================================
+# SERIALIZER 14: Aggregated Survey Response Stats
+# ============================================
+class AggregatedSurveyResponseSerializer(serializers.Serializer):
+	"""
+	Serializer for aggregated survey responses
+	Shows statistics for all responses to a survey
+	Perfect for charts and visualizations
+	"""
+	survey_id = serializers.UUIDField()
+	survey_title = serializers.CharField()
+	total_responses = serializers.IntegerField()
+	questions = AggregatedQuestionSerializer(many=True)

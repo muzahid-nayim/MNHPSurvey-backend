@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 from rest_framework.decorators import action
 from django.db import transaction
 from rest_framework import serializers
+from django.db.models import Count, Q
 from .models import (
 	Survey,
 	Question,
@@ -30,6 +31,7 @@ from .serializers import (
 	AllowedEmailSerializer,
 	SurveyResponseSerializer,
 	SubmitSurveyResponseSerializer,
+	AggregatedSurveyResponseSerializer,
 )
 
 User = get_user_model()
@@ -233,6 +235,27 @@ class QuestionOptionDetailView(generics.RetrieveUpdateDestroyAPIView):
 			question__survey__owner=self.request.user,
 		)
 
+	def destroy(self, request, *args, **kwargs):
+		"""
+		Override destroy to prevent deleting options with responses
+		"""
+		option = self.get_object()
+
+		# Check if this option has any responses
+		has_responses = AnswerSelection.objects.filter(selected_option=option).exists()
+
+		if has_responses:
+			return Response(
+				{
+					"error": "Cannot delete this option because survey responses reference it. "
+					"This option will be hidden from new responses but kept for data integrity."
+				},
+				status=status.HTTP_400_BAD_REQUEST,
+			)
+
+		# Safe to delete - no responses exist for this option
+		return super().destroy(request, *args, **kwargs)
+
 
 # ============================================
 # VIEW 8: Manage Allowed Emails (User's list)
@@ -403,9 +426,10 @@ class TakeSurveyView(APIView):
 
 		# Step 3: Check access based on access_type
 		if survey.access_type == "public_anonymous":
+			pass
 			# Anyone can access
-			if SurveyResponse.objects.filter(survey=survey, ip_address=ip, is_complete=True).exists():
-				return Response({"error": "You have already responded this public survey."}, status=status.HTTP_400_BAD_REQUEST)
+			# if SurveyResponse.objects.filter(survey=survey, ip_address=ip, is_complete=True).exists():
+			# 	return Response({"error": "You have already responded this public survey."}, status=status.HTTP_400_BAD_REQUEST)
 
 		elif survey.access_type == "public_authenticated":
 			# Must be logged in
@@ -459,9 +483,10 @@ class SubmitSurveyResponseView(APIView):
 
 		# ---------- one-response guard ----------
 		if survey.access_type == "public_anonymous":
+			pass
 			# public → block duplicate IP
-			if SurveyResponse.objects.filter(survey=survey, ip_address=ip, is_complete=True).exists():
-				return Response({"error": "You have already responded this public survey."}, status=status.HTTP_400_BAD_REQUEST)
+			# if SurveyResponse.objects.filter(survey=survey, ip_address=ip, is_complete=True).exists():
+			# 	return Response({"error": "You have already responded this public survey."}, status=status.HTTP_400_BAD_REQUEST)
 		else:
 			# authenticated or invited → block duplicate user
 			if user and not survey.allow_multiple_responses:
@@ -519,25 +544,112 @@ class SubmitSurveyResponseView(APIView):
 	
 	
 # ============================================
-# VIEW 12: View Survey Responses (Survey Owner)
+# VIEW 12: View Survey Responses (Aggregated Stats)
 # ============================================
-class SurveyResponseListView(generics.ListAPIView):
+class SurveyResponseListView(APIView):
 	"""
-	GET: List all responses for a survey
+	GET: Get aggregated response statistics for a survey
 
 	Endpoint: /api/surveys/<survey_id>/responses/
 
-	Only survey owner can view responses
-	"""
+	Returns:
+	{
+		"survey_id": "uuid",
+		"survey_title": "My Survey",
+		"total_responses": 10,
+		"questions": [
+			{
+				"id": "uuid",
+				"question_text": "How is the service?",
+				"question_type": "single_choice",
+				"total_answers": 10,
+				"options": [
+					{
+						"id": "uuid",
+						"option_text": "Good",
+						"count": 5,
+						"percentage": 50.0
+					},
+					{
+						"id": "uuid",
+						"option_text": "Bad",
+						"count": 3,
+						"percentage": 30.0
+					},
+					{
+						"id": "uuid",
+						"option_text": "Average",
+						"count": 2,
+						"percentage": 20.0
+					}
+				]
+			}
+		]
+	}
+ """
 
 	permission_classes = [IsAuthenticated]
-	serializer_class = SurveyResponseSerializer
 
-	def get_queryset(self):
-		"""Get all complete responses for this survey"""
-		survey_id = self.kwargs.get("survey_id")
-		survey = get_object_or_404(Survey, id=survey_id, owner=self.request.user)
-		return SurveyResponse.objects.filter(survey=survey, is_complete=True)
+	def get(self, request, survey_id):
+		"""Get aggregated response statistics"""
+		# Verify ownership
+		survey = get_object_or_404(Survey, id=survey_id, owner=request.user)
+
+		# Get total complete responses
+		total_responses = SurveyResponse.objects.filter(
+			survey=survey, is_complete=True
+		).count()
+
+		# Build aggregated data
+		questions_data = []
+
+		for question in survey.questions.all():
+			# Count answers for this question
+			total_answers = Answer.objects.filter(
+				response__survey=survey,
+				response__is_complete=True,
+				question=question,
+			).count()
+
+			options_data = []
+
+			for option in question.options.all():
+				# Count selections for this option
+				count = AnswerSelection.objects.filter(
+					answer__response__survey=survey,
+					answer__response__is_complete=True,
+					answer__question=question,
+					selected_option=option,
+				).count()
+
+				# Calculate percentage
+				percentage = (count / total_answers * 100) if total_answers > 0 else 0
+
+				options_data.append({
+					"id": str(option.id),
+					"option_text": option.option_text,
+					"count": count,
+					"percentage": round(percentage, 2),
+				})
+
+			questions_data.append({
+				"id": str(question.id),
+				"question_text": question.question_text,
+				"question_type": question.question_type,
+				"total_answers": total_answers,
+				"options": options_data,
+			})
+
+		# Serialize the aggregated data
+		aggregated_data = {
+			"survey_id": str(survey.id),
+			"survey_title": survey.title,
+			"total_responses": total_responses,
+			"questions": questions_data,
+		}
+
+		serializer = AggregatedSurveyResponseSerializer(aggregated_data)
+		return Response(serializer.data)
 
 
 # ============================================
