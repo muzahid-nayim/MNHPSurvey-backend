@@ -12,36 +12,49 @@ We follow [Semantic Versioning](https://semver.org/):
 
 ---
 
+## [0.3.1] - 2026-02-28
+
+### Fixed
+
+- **Response Filtering in Data Table**
+	- Fixed `SurveyResponseDetailView` to only return responses that answered the selected question
+	- Prevented duplicate respondents appearing in filtered results
+	- Removed references to non-existent `respondent_name` field from model
+
+- **API Consistency**
+	- Renamed `SurveyStatusView` to `SurveyStatusUpdateView` for consistency with URL patterns
+
+---
+
 ## [0.3.0] - 2026-02-25
 
 ### Added
 
 - **Comprehensive Code Documentation**
-
-    - Documented all 15 API views with their purposes and relationships
-    - Added database relationship diagrams
-    - Included common tasks with step-by-step explanations
+	- Documented all 15 API views with their purposes and relationships
+	- Added database relationship diagrams
+	- Included common tasks with step-by-step explanations
 
 - **Simplified & Refactored Code for Beginners**
-    - Refactored `SurveyResponseListView` with helper methods for clarity
-    - Split complex logic into `_get_question_statistics()` and `_get_option_statistics()` helpers
-    - Refactored `TakeSurveyView` with `_verify_user_access()` helper for clearer logic
-    - Enhanced `SurveyListCreateView` with improved comments and clarity
-    - Enhanced `QuestionCreateView` with better step-by-step documentation
+	- Refactored `SurveyResponseListView` with helper methods for clarity
+	- Split complex logic into `_get_question_statistics()` and `_get_option_statistics()` helpers
+	- Refactored `TakeSurveyView` with `_verify_user_access()` helper for clearer logic
+	- Enhanced `SurveyListCreateView` with improved comments and clarity
+	- Enhanced `QuestionCreateView` with better step-by-step documentation
 
 ### Changed
 
 - **Improved Code Readability**
-    - Added detailed comments explaining each step in views
-    - Enhanced docstrings with practical examples
-    - Improved variable naming for clarity
-    - Added step-by-step process explanations in all major views
-    - Enhanced model documentation with relationship diagrams
-    - Improved serializer documentation with usage examples
+	- Added detailed comments explaining each step in views
+	- Enhanced docstrings with practical examples
+	- Improved variable naming for clarity
+	- Added step-by-step process explanations in all major views
+	- Enhanced model documentation with relationship diagrams
+	- Improved serializer documentation with usage examples
 
 - **Better Error Handling**
-    - More descriptive error messages in views
-    - Clearer validation error handling in serializers
+	- More descriptive error messages in views
+	- Clearer validation error handling in serializers
 
 ### Enhancement
 
