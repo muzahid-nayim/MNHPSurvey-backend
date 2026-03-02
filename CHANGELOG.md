@@ -11,6 +11,9 @@ We follow [Semantic Versioning](https://semver.org/):
 - **PATCH** version `0.0.Z`: Increment for backward-compatible bug fixes and documentation tweaks.
 
 ---
+## [0.3.2] - 2026-03-02
+### Changed
+- Make some changes for deployment .
 
 ## [0.3.1] - 2026-02-28
 
