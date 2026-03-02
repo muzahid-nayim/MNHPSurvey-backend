@@ -115,7 +115,7 @@ urlpatterns = [
 	),
 	# View single response detail
 	path(
-		"<uuid:survey_id>/responses/<uuid:id>/",
+		"<uuid:survey_id>/responses/detail/",
 		SurveyResponseDetailView.as_view(),
 		name="response-detail",
 	),
@@ -130,6 +130,7 @@ urlpatterns = [
 		SubmitSurveyResponseView.as_view(),
 		name="submit-survey",
 	),
+
 ]
 
 # ==========================================
