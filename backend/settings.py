@@ -3,14 +3,17 @@ from pathlib import Path
 from datetime import timedelta
 from decouple import config
 import dj_database_url
-
+import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY')
 
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost').split(',')
+if os.environ.get('DEBUG', 'True') == 'False':
+    ALLOWED_HOSTS = ['mnhp.pythonanywhere.com', 'localhost', '127.0.0.1']
+else:
+    ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='').split(',')
 
 INSTALLED_APPS = [
 	'django.contrib.admin',
