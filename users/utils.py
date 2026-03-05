@@ -9,11 +9,11 @@ def send_verification_email(user, token):
 	"""Send email verification link"""
 	verification_url = f"{settings.FRONTEND_URL}/verify-email?token={token}"
 	
-	subject = 'Verify Your Email - Survey Platform'
+	subject = 'Verify Your Email - MNHP survey'
 	html_message = f"""
 	<html>
 		<body>
-			<h2>Welcome to Survey Platform!</h2>
+			<h2>Welcome to MNHP survey!</h2>
 			<p>Hi {user.username},</p>
 			<p>Thank you for registering. Please verify your email by clicking the link below:</p>
 			<p><a href="{verification_url}">Verify Email</a></p>
@@ -39,7 +39,7 @@ def send_password_reset_email(user, token):
 	"""Send password reset link"""
 	reset_url = f"{settings.FRONTEND_URL}/reset-password?token={token}"
 	
-	subject = 'Reset Your Password - Survey Platform'
+	subject = 'Reset Your Password - MNHP survey'
 	html_message = f"""
 	<html>
 		<body>

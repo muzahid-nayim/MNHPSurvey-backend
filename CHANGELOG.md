@@ -11,6 +11,24 @@ We follow [Semantic Versioning](https://semver.org/):
 - **PATCH** version `0.0.Z`: Increment for backward-compatible bug fixes and documentation tweaks.
 
 ---
+## [0.4.0] - 2026-03-05
+### Added
+- Duplicate response guard in `TakeSurveyView` — blocks by IP for anonymous, by user for authenticated surveys.
+- Specific error codes (`login_required`, `not_invited`) in `TakeSurveyView` and `SubmitSurveyResponseView`.
+- Production-ready `settings.py` — whitenoise, dj-database-url, security headers.
+- Change readme file .
+
+
+### Fixed
+- `AllowedEmailListCreateView` filtering by `user` instead of `owner`.
+- `SubmitSurveyResponseView` lost duplicate response guard after refactor — restored.
+- CORS error caused by trailing slash in `CORS_ALLOWED_ORIGINS`.
+
+## [0.3.3] - 2026-03-04
+### Fixed
+- Fixed allowed email is not adding issue . 
+
+
 ## [0.3.2] - 2026-03-02
 ### Changed
 - Make some changes for deployment .
