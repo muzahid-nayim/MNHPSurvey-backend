@@ -25,25 +25,7 @@ from .views import (
 	SurveyResponseDetailView,
 )
 
-"""
-URL Pattern Explanation:
 
-Structure:
-/api/surveys/                           - List/Create surveys
-/api/surveys/<id>/                      - Get/Update/Delete survey
-/api/surveys/<id>/questions/            - Add/List questions
-/api/surveys/<id>/questions/<id>/       - Update/Delete question
-/api/surveys/<id>/questions/<id>/options/    - Add option
-/api/surveys/<id>/questions/<id>/options/<id>/ - Update/Delete option
-/api/surveys/<id>/allowed-emails/       - Manage allowed emails for survey
-/api/surveys/<id>/status/               - Update survey status
-/api/surveys/<id>/responses/            - View all responses
-/api/surveys/<id>/responses/<id>/       - View single response
-/api/surveys/take/<id>/                 - Public: Get survey to take
-/api/surveys/submit/<id>/               - Public: Submit response
-/api/allowed-emails/                    - List/Create user's allowed emails
-/api/allowed-emails/<id>/               - View/Delete user's allowed email
-"""
 
 urlpatterns = [
 

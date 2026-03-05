@@ -211,10 +211,10 @@ class AllowedEmailListCreateView(generics.ListCreateAPIView):
 	serializer_class = AllowedEmailSerializer
 
 	def get_queryset(self):
-		return AllowedEmail.objects.filter(user=self.request.user)
+		return AllowedEmail.objects.filter(owner=self.request.user)
 
 	def perform_create(self, serializer):
-		serializer.save(user=self.request.user)
+		serializer.save(owner=self.request.user)
 
 
 # ============================================
@@ -233,7 +233,7 @@ class AllowedEmailDetailView(generics.RetrieveDestroyAPIView):
 	lookup_field = "id"
 
 	def get_queryset(self):
-		return AllowedEmail.objects.filter(user=self.request.user)
+		return AllowedEmail.objects.filter(owner=self.request.user)
 
 
 # ============================================
@@ -279,7 +279,7 @@ class SurveyAllowedEmailsView(APIView):
 		# Get allowed emails owned by user
 		allowed_emails = AllowedEmail.objects.filter(
 			id__in=allowed_email_ids,
-			user=request.user
+			owner=request.user
 		)
 
 		# Create relations
@@ -353,186 +353,169 @@ class SurveyStatusUpdateView(APIView):
 			}
 		)
 
-
 # ============================================
-# VIEW 12: Take Survey (Public)
+# VIEW 10: Get Survey for Taking (Public Access)
 # ============================================
 class TakeSurveyView(APIView):
 	"""
-	GET: Retrieve survey for taking (public endpoint)
+	GET: Get survey for taking (responder view)
 
 	Endpoint: /api/surveys/take/<survey_id>/
+	or: /api/surveys/take/<survey_id>/?token=<invitation_token>
+
+	This is public - no authentication required
 	"""
 
 	permission_classes = [AllowAny]
 
-	def get(self, request, survey_id):
-		# Get survey and verify it's active
-		survey = get_object_or_404(Survey, id=survey_id, status="active")
 
-		# Check access restrictions
-		if not self._verify_user_access(survey, request):
+
+	def get(self, request, survey_id):
+		"""
+		Get survey for taking
+
+		Steps:
+		1. Get survey
+		2. Check if survey is active
+		3. Check access permissions
+		4. Return survey with questions
+		"""
+		
+
+		# Step 1: Get survey
+		survey = get_object_or_404(Survey, id=survey_id)
+		ip  = get_client_ip(request)
+		# Step 2: Check status
+		if survey.status != "active":
 			return Response(
-				{"error": "You don't have permission to take this survey."},
-				status=status.HTTP_403_FORBIDDEN,
+				{"error": "This survey is not currently accepting responses."},
+				status=status.HTTP_400_BAD_REQUEST,
 			)
 
+		# Step 3: Check access based on access_type
+		if survey.access_type == "public_anonymous":
+			# Anyone can access
+			if SurveyResponse.objects.filter(survey=survey, ip_address=ip, is_complete=True).exists():
+				return Response({"error": "You have already responded this public survey."}, status=status.HTTP_400_BAD_REQUEST)
+		
+
+		elif survey.access_type == "public_authenticated":
+			if not request.user.is_authenticated:
+				return Response(
+					{"error": "You must be logged in to access this survey."},
+					status=status.HTTP_401_UNAUTHORIZED,
+				)
+			# Duplicate guard
+			if not survey.allow_multiple_responses:
+				if SurveyResponse.objects.filter(survey=survey, respondent=request.user, is_complete=True).exists():
+					return Response(
+						{"error": "You have already responded to this survey."},
+						status=status.HTTP_400_BAD_REQUEST
+					)
+
+		elif survey.access_type == "private_invited":
+			if not request.user.is_authenticated:
+				return Response(
+					{"error": "You must be logged in to access this survey."},
+					status=status.HTTP_401_UNAUTHORIZED,
+				)
+			is_allowed = AllowedEmail.objects.filter(
+				surveyallowedemail__survey=survey, email=request.user.email
+			).exists()
+			if not is_allowed:
+				return Response(
+					{"error": "You are not invited to access this survey."},
+					status=status.HTTP_403_FORBIDDEN,
+				)
+			# Duplicate guard
+			if not survey.allow_multiple_responses:
+				if SurveyResponse.objects.filter(survey=survey, respondent=request.user, is_complete=True).exists():
+					return Response(
+						{"error": "You have already responded to this survey."},
+						status=status.HTTP_400_BAD_REQUEST
+					)
+
+		# Step 4: Return survey
 		serializer = SurveyDetailSerializer(survey)
 		return Response(serializer.data)
 
-	def _verify_user_access(self, survey, request):
-		"""
-		Helper: Verify user has access based on survey access_type.
-		
-		Access types:
-		- public_anonymous: Anyone can take
-		- public_authenticated: Must be authenticated
-		- private_invited: Must have valid token or email allowed
-		"""
-		if survey.access_type == "public_anonymous":
-			return True
-
-		if survey.access_type == "public_authenticated":
-			return request.user.is_authenticated
-
-		if survey.access_type == "private_invited":
-			# Check token or email
-			token = request.query_params.get("token")
-			if token:
-				return self._verify_token(survey, token)
-
-			if request.user.is_authenticated:
-				return self._verify_email(survey, request.user.email)
-
-			return False
-
-		return False
-
-	def _verify_token(self, survey, token):
-		"""Helper: Verify invitation token is valid"""
-		# Implementation depends on token structure
-		return True
-
-	def _verify_email(self, survey, email):
-		"""Helper: Check if email is allowed for survey"""
-		return SurveyAllowedEmail.objects.filter(
-			survey=survey,
-			allowed_email__email=email
-		).exists()
 
 
-# ============================================
-# VIEW 13: Submit Survey Response
-# ============================================
 class SubmitSurveyResponseView(APIView):
 	"""
-	POST: Submit survey response (public endpoint)
-
-	Endpoint: /api/surveys/submit/<survey_id>/
+	POST /api/surveys/<survey_id>/submit/
+	Body: { "answers": [ { "question_id": "uuid", "selected_options": ["uuid"] } ] }
 	"""
-
 	permission_classes = [AllowAny]
 
+	@transaction.atomic
 	def post(self, request, survey_id):
-		# Get survey
 		survey = get_object_or_404(Survey, id=survey_id, status="active")
 
-		# Verify access
-		if not self._verify_user_access(survey, request):
-			return Response(
-				{"error": "You don't have permission to submit this survey."},
-				status=status.HTTP_403_FORBIDDEN,
-			)
+		user = request.user if request.user.is_authenticated else None
+		ip = get_client_ip(request)
 
-		# Create response record
-		with transaction.atomic():
-			response_obj = self._create_response_object(survey, request)
-			self._create_answers(survey, response_obj, request.data)
+		# ── Duplicate response guard ──
+		if survey.access_type == "public_anonymous":
+			if SurveyResponse.objects.filter(survey=survey, ip_address=ip, is_complete=True).exists():
+				return Response(
+					{"error": "You have already responded to this survey."},
+					status=status.HTTP_400_BAD_REQUEST
+				)
+		else:
+			if user and not survey.allow_multiple_responses:
+				if SurveyResponse.objects.filter(survey=survey, respondent=user, is_complete=True).exists():
+					return Response(
+						{"error": "You have already responded to this survey."},
+						status=status.HTTP_400_BAD_REQUEST
+					)
 
-		serializer = SurveyResponseSerializer(response_obj)
+		# ── Access check ──
+		email = None
+		if survey.access_type == "public_authenticated" and not user:
+			return Response({"error": "You must be logged in to access this survey."}, status=status.HTTP_401_UNAUTHORIZED)
+
+		if survey.access_type == "private_invited":
+			if not user:
+				return Response({"error": "You must be logged in to access this survey."}, status=status.HTTP_401_UNAUTHORIZED)
+			if not AllowedEmail.objects.filter(surveyallowedemail__survey=survey, email=user.email).exists():
+				return Response({"error": "You are not invited to access this survey."}, status=status.HTTP_403_FORBIDDEN)
+			email = user.email
+
+		# ── Create response ──
+		response_obj = SurveyResponse.objects.create(
+			survey=survey,
+			respondent=user,
+			respondent_email=email or (user.email if user else ""),
+			ip_address=ip,
+		)
+
+		# ── Save answers ──
+		serializer = SubmitSurveyResponseSerializer(data=request.data)
+		serializer.is_valid(raise_exception=True)
+
+		for ans in serializer.validated_data["answers"]:
+			self._save_answer(response_obj, ans)
+
+		# ── Complete ──
+		response_obj.is_complete = True
+		response_obj.completed_at = timezone.now()
+		response_obj.save(update_fields=["is_complete", "completed_at"])
+
 		return Response(
-			{
-				"message": "Response submitted successfully",
-				"response_id": str(response_obj.id),
-			},
+			{"message": "Survey submitted!", "response_id": str(response_obj.id)},
 			status=status.HTTP_201_CREATED,
 		)
 
-	def _verify_user_access(self, survey, request):
-		"""Helper: Same logic as TakeSurveyView"""
-		if survey.access_type == "public_anonymous":
-			return True
+	def _save_answer(self, response_obj, ans):
+		question = get_object_or_404(Question, id=ans["question_id"], survey=response_obj.survey)
+		if question.question_type == "single_choice" and len(ans["selected_options"]) > 1:
+			raise serializers.ValidationError("Only one option allowed for this question")
 
-		if survey.access_type == "public_authenticated":
-			return request.user.is_authenticated
-
-		if survey.access_type == "private_invited":
-			token = request.query_params.get("token")
-			if token:
-				return True
-
-			if request.user.is_authenticated:
-				return SurveyAllowedEmail.objects.filter(
-					survey=survey,
-					allowed_email__email=request.user.email
-				).exists()
-
-		return False
-
-	def _create_response_object(self, survey, request):
-		"""Helper: Create SurveyResponse record"""
-		respondent = request.user if request.user.is_authenticated else None
-		respondent_email = (
-			request.user.email if request.user.is_authenticated
-			else request.data.get("respondent_email", "")
-		)
-
-		response_obj = SurveyResponse.objects.create(
-			survey=survey,
-			respondent=respondent,
-			respondent_email=respondent_email,
-			started_at=timezone.now(),
-			completed_at=timezone.now(),
-			is_complete=True,
-			ip_address=get_client_ip(request),
-		)
-
-		return response_obj
-
-	def _create_answers(self, survey, response_obj, data):
-		"""Helper: Create Answer and AnswerSelection records"""
-		answers_data = data.get("answers", [])
-
-		for answer_data in answers_data:
-			question_id = answer_data.get("question_id")
-			selected_option_ids = answer_data.get("selected_options", [])
-
-			# Get question
-			try:
-				question = Question.objects.get(
-					id=question_id, survey=survey
-				)
-			except Question.DoesNotExist:
-				continue
-
-			# Create answer
-			answer = Answer.objects.create(
-				response=response_obj,
-				question=question
-			)
-
-			# Create selections
-			for option_id in selected_option_ids:
-				try:
-					option = QuestionOption.objects.get(
-						id=option_id, question=question
-					)
-					AnswerSelection.objects.create(
-						answer=answer,
-						selected_option=option
-					)
-				except QuestionOption.DoesNotExist:
-					continue
+		answer = Answer.objects.create(response=response_obj, question=question)
+		for opt_id in ans["selected_options"]:
+			option = get_object_or_404(QuestionOption, id=opt_id, question=question)
+			AnswerSelection.objects.create(answer=answer, selected_option=option)
 
 
 # ============================================

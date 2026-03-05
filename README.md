@@ -1,7 +1,24 @@
+
+
+## Tech Stack
+
+- Python 3.12
+- Django 5
+- Django REST Framework
+- SimpleJWT
+- PostgreSQL
+- Whitenoise
+
+
+## Frontend Repo
+[git@github.com:muzahid-nayim/MNHPSurvey-frontend.git](https://git@github.com:muzahid-nayim/MNHPSurvey-frontend.git)
+
+
+
 # MNHPSurvey Backend Setup Instructions
 
 # 1. Clone the Repository
-git clone <repository-url>
+git clone `git@github.com:muzahid-nayim/MNHPSurvey-backend.git`
 cd MNHPSurvey/Backend
 
 # 2. Create and Activate Virtual Environment
