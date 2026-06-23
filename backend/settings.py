@@ -68,7 +68,7 @@ DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
 
 
 # Frontend URL
-FRONTEND_URL = config('FRONTEND_URL', default='https://mnhp-survey.vercel.app')
+FRONTEND_URL = config('FRONTEND_URL', default='https://mnhp-survey.netlify.app')
 
 # Token expiry times
 EMAIL_VERIFICATION_TOKEN_LIFETIME = timedelta(hours=24)
@@ -88,7 +88,7 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
 	"http://localhost:3000",
-	"https://mnhp-survey.vercel.app",
+	"https://mnhp-survey.netlify.app",
 	config('FRONTEND_URL', default='http://localhost:3000'),
 ]
 CORS_ALLOW_CREDENTIALS = True
