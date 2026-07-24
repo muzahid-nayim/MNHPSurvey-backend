@@ -7,6 +7,8 @@ class User(AbstractUser):
 	id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 	email = models.EmailField(unique=True)
 	is_email_verified = models.BooleanField(default=False)
+	# profile picture — optional
+	avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now=True)
 	

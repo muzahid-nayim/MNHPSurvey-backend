@@ -265,15 +265,69 @@ class ProfileView(APIView):
 	permission_classes = [IsAuthenticated]
 	
 	def get(self, request):
-		serializer = UserSerializer(request.user)
+		serializer = UserSerializer(request.user, context={"request": request})
 		return Response(serializer.data)
 	
 	def patch(self, request):
 		serializer = UserSerializer(
-			request.user, data=request.data, partial=True
+			request.user,
+			data=request.data,
+			partial=True,
+			context={"request": request},
 		)
 		serializer.is_valid(raise_exception=True)
 		serializer.save()
+		return Response(serializer.data)
+
+
+class AvatarUploadView(APIView):
+	"""
+	POST: upload / replace profile picture (multipart field name: avatar)
+	DELETE: remove profile picture
+	"""
+
+	permission_classes = [IsAuthenticated]
+
+	# keep uploads small
+	MAX_SIZE = 2 * 1024 * 1024  # 2 MB
+	ALLOWED_TYPES = ("image/jpeg", "image/png", "image/webp", "image/gif")
+
+	def post(self, request):
+		file = request.FILES.get("avatar")
+		if not file:
+			return Response(
+				{"error": "No image file provided. Use field name 'avatar'."},
+				status=status.HTTP_400_BAD_REQUEST,
+			)
+
+		if file.content_type not in self.ALLOWED_TYPES:
+			return Response(
+				{"error": "Only JPEG, PNG, WEBP, or GIF images are allowed."},
+				status=status.HTTP_400_BAD_REQUEST,
+			)
+
+		if file.size > self.MAX_SIZE:
+			return Response(
+				{"error": "Image must be 2 MB or smaller."},
+				status=status.HTTP_400_BAD_REQUEST,
+			)
+
+		user = request.user
+		# drop old file if any
+		if user.avatar:
+			user.avatar.delete(save=False)
+
+		user.avatar = file
+		user.save(update_fields=["avatar", "updated_at"])
+
+		serializer = UserSerializer(user, context={"request": request})
+		return Response(serializer.data)
+
+	def delete(self, request):
+		user = request.user
+		if user.avatar:
+			user.avatar.delete(save=True)
+		serializer = UserSerializer(user, context={"request": request})
 		return Response(serializer.data)
 
 

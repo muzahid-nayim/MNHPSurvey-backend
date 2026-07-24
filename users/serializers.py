@@ -46,10 +46,23 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 			'id': str(user.id),
 			'username': user.username,
 			'email': user.email,
+			'first_name': user.first_name,
+			'last_name': user.last_name,
 			'is_email_verified': user.is_email_verified,
+			'avatar': _avatar_url(user, self.context.get('request')),
 		}
 
 		return data
+
+
+def _avatar_url(user, request=None):
+	"""Build a full URL for the avatar, or None if empty."""
+	if not user.avatar:
+		return None
+	url = user.avatar.url
+	if request is not None:
+		return request.build_absolute_uri(url)
+	return url
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -82,10 +95,25 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+	# expose as "avatar" string URL for the frontend
+	avatar = serializers.SerializerMethodField()
+
 	class Meta:
 		model = User
-		fields = ('id', 'username', 'email', 'is_email_verified', 'created_at','first_name','last_name',)
-		read_only_fields = ('id', 'is_email_verified', 'created_at')
+		fields = (
+			'id',
+			'username',
+			'email',
+			'is_email_verified',
+			'created_at',
+			'first_name',
+			'last_name',
+			'avatar',
+		)
+		read_only_fields = ('id', 'is_email_verified', 'created_at', 'avatar')
+
+	def get_avatar(self, obj):
+		return _avatar_url(obj, self.context.get('request'))
 
 
 class EmailVerificationSerializer(serializers.Serializer):
