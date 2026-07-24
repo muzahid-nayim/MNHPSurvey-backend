@@ -6,8 +6,10 @@ from .views import (
 	CustomTokenObtainPairView, RegisterView, ProfileView,
 	EmailVerificationView, ResendVerificationEmailView,
 	PasswordResetRequestView, PasswordResetConfirmView,
-	ChangePasswordView, LogoutView, DeleteAccountView
+	ChangePasswordView, LogoutView, DeleteAccountView,
+	AvatarUploadView,
 )
+
 
 urlpatterns = [
 	# Authentication
@@ -27,5 +29,6 @@ urlpatterns = [
 	
 	# Profile
 	path('profile/', ProfileView.as_view(), name='profile'),
+	path('profile/avatar/', AvatarUploadView.as_view(), name='profile-avatar'),
 	path('delete-account/', DeleteAccountView.as_view(), name='delete_account'),
 ]

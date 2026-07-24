@@ -11,6 +11,11 @@ We follow [Semantic Versioning](https://semver.org/):
 - **PATCH** version `0.0.Z`: Increment for backward-compatible bug fixes and documentation tweaks.
 
 ---
+## [0.6.0] - 2026-07-24
+### Added
+- User avatar field and `/profile/avatar/` upload/delete endpoint.
+- Media file serving for profile pictures (`MEDIA_URL` / `MEDIA_ROOT`).
+
 ## [0.5.0] - 2026-07-24
 ### Added
 - Response export endpoint (`/responses/export/`) for CSV and PDF.
