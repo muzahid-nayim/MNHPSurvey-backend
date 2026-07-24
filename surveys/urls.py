@@ -23,6 +23,7 @@ from .views import (
 	# Response viewing endpoints
 	SurveyResponseListView,
 	SurveyResponseDetailView,
+	SurveyResponseExportView,
 )
 
 
@@ -100,6 +101,12 @@ urlpatterns = [
 		"<uuid:survey_id>/responses/detail/",
 		SurveyResponseDetailView.as_view(),
 		name="response-detail",
+	),
+	# Export responses as CSV or PDF
+	path(
+		"<uuid:survey_id>/responses/export/",
+		SurveyResponseExportView.as_view(),
+		name="response-export",
 	),
 	# ==========================================
 	# PUBLIC ENDPOINTS (Survey takers)

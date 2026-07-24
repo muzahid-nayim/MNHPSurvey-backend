@@ -725,3 +725,63 @@ class SurveyResponseDetailView(APIView):
 			})
 
 		return Response(data)
+
+
+# ============================================
+# VIEW 16: Survey Response Export (CSV / PDF)
+# ============================================
+class SurveyResponseExportView(APIView):
+	"""
+	GET: Export survey responses as CSV or PDF
+
+	Endpoint: /api/surveys/<survey_id>/responses/export/
+
+	Query params:
+	  - export_format: csv | pdf   (required-ish, default csv)
+	  - row_limit: number         (optional, how many individual rows)
+	  - include_summary: true/false
+	  - include_responses: true/false
+	  - chart_style: none | bar | pie | both   (pdf only)
+
+	Note: use export_format, not format — DRF reserves ?format= for renderers.
+	"""
+
+	permission_classes = [IsAuthenticated]
+
+	def get(self, request, survey_id):
+		from .export_utils import build_csv_response, build_pdf_response
+
+		survey = get_object_or_404(Survey, id=survey_id, owner=request.user)
+		export_format = (
+			request.query_params.get("export_format")
+			or request.query_params.get("type")
+			or "csv"
+		).lower()
+
+		options = {
+			"row_limit": request.query_params.get("row_limit"),
+			"include_summary": self._bool_param(
+				request, "include_summary", default=True
+			),
+			"include_responses": self._bool_param(
+				request, "include_responses", default=True
+			),
+			"chart_style": request.query_params.get("chart_style") or "bar",
+		}
+
+		if export_format == "csv":
+			return build_csv_response(survey, options)
+		if export_format == "pdf":
+			return build_pdf_response(survey, options)
+
+		return Response(
+			{"error": "Invalid export_format. Use csv or pdf."},
+			status=status.HTTP_400_BAD_REQUEST,
+		)
+
+	def _bool_param(self, request, name, default=True):
+		raw = request.query_params.get(name)
+		if raw is None:
+			return default
+		return str(raw).lower() in ("1", "true", "yes", "on")
+
