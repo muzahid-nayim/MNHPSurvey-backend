@@ -11,6 +11,12 @@ We follow [Semantic Versioning](https://semver.org/):
 - **PATCH** version `0.0.Z`: Increment for backward-compatible bug fixes and documentation tweaks.
 
 ---
+## [0.5.0] - 2026-07-24
+### Added
+- Response export endpoint (`/responses/export/`) for CSV and PDF.
+- Export options: row limit, summary, charts (bar/pie/both).
+- `reportlab` dependency for PDF generation.
+
 ## [0.4.0] - 2026-03-05
 ### Added
 - Duplicate response guard in `TakeSurveyView` — blocks by IP for anonymous, by user for authenticated surveys.
