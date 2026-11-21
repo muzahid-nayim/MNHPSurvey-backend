@@ -26,33 +26,23 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 
 class RegisterView(generics.CreateAPIView):
-	queryset = User.objects.all()
-	permission_classes = [AllowAny]
-	serializer_class = RegisterSerializer
-	
-	def create(self, request, *args, **kwargs):
-		serializer = self.get_serializer(data=request.data)
-		serializer.is_valid(raise_exception=True)
-		user = serializer.save()
-		
-		# Create verification token
-		verification_token = EmailVerificationToken.objects.create(user=user)
-		
-		# Send verification email
-		try:
-			send_verification_email(user, verification_token.token)
-		except Exception as e:
-			# Log error but don't fail registration
-			print(f"Failed to send verification email: {e}")
-		
-		return Response({
-			"message": "Registration successful. Please check your email to verify your account.",
-			"user": {
-				"id": str(user.id),
-				"username": user.username,
-				"email": user.email,
-			}
-		}, status=status.HTTP_201_CREATED)
+    queryset = User.objects.all()
+    permission_classes = [AllowAny]
+    serializer_class = RegisterSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+
+        return Response({
+            "message": "Registration successful. You can now log in.",
+            "user": {
+                "id": str(user.id),
+                "username": user.username,
+                "email": user.email,
+            }
+        }, status=status.HTTP_201_CREATED)
 
 
 class EmailVerificationView(APIView):

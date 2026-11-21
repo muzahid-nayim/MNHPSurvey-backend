@@ -32,8 +32,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 			raise serializers.ValidationError({"error": "User account is disabled."})
 
 		# Check email verified
-		if not getattr(user, 'is_email_verified', False):
-			raise serializers.ValidationError({"error": "Email not verified. Please verify your email before logging in."})
+		# if not getattr(user, 'is_email_verified', False):
+		# 	raise serializers.ValidationError({"error": "Email not verified. Please verify your email before logging in."})
 
 		# At this point we can generate tokens
 		refresh = RefreshToken.for_user(user)
@@ -48,7 +48,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 			'email': user.email,
 			'first_name': user.first_name,
 			'last_name': user.last_name,
-			'is_email_verified': user.is_email_verified,
+			# 'is_email_verified': user.is_email_verified,
 			'avatar': _avatar_url(user, self.context.get('request')),
 		}
 

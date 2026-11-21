@@ -88,7 +88,7 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
 	"http://localhost:3000",
-	"https://mnhp-survey.netlify.app",
+	"https://mnhpsurvey.muzahid.dev",
 	config('FRONTEND_URL', default='http://localhost:3000'),
 ]
 CORS_ALLOW_CREDENTIALS = True
